@@ -40,15 +40,11 @@
 #include <px4_platform_common/posix.h>
 #include <px4_platform_common/px4_work_queue/ScheduledWorkItem.hpp>
 #include <uORB/topics/orb_test.h>
-#include <uORB/topics/sensor_accel.h>
 #include <uORB/Publication.hpp>
 #include <uORB/Subscription.hpp>
 #include <uORB/SubscriptionCallback.hpp>
-#include <uORB/topics/vehicle_control_mode.h>
-#include <uORB/topics/vehicle_attitude_setpoint.h>
-#include <uORB/topics/vehicle_attitude.h>
-#include <lib/matrix/matrix/Euler.hpp>
-#include <lib/matrix/matrix/Quaternion.hpp>
+#include <uORB/topics/distance_sensor.h>
+#include <uORB/topics/pixy_vector.h>
 
 #include "nxpcup_race.h"
 
@@ -75,14 +71,16 @@ private:
 	void Run() override;
 
 	/* Publications */
-	uORB::Publication<vehicle_control_mode_s> _control_mode_pub{ORB_ID(vehicle_control_mode)};
-	uORB::Publication<vehicle_attitude_setpoint_s> _att_sp_pub{ORB_ID(vehicle_attitude_setpoint)};
+	//uORB::Publication<vehicle_control_mode_s> _control_mode_pub{ORB_ID(vehicle_control_mode)};
+	//uORB::Publication<vehicle_attitude_setpoint_s> _att_sp_pub{ORB_ID(vehicle_attitude_setpoint)};
 
 	/* Subscriptions */
 	uORB::SubscriptionData<pixy_vector_s> pixy_sub{ORB_ID(pixy_vector)};
-	uORB::SubscriptionData<vehicle_attitude_s> att_sub{ORB_ID(vehicle_attitude)};
+	//uORB::SubscriptionData<vehicle_attitude_s> att_sub{ORB_ID(vehicle_attitude)};
+	uORB::SubscriptionData<distance_sensor_s> distance_sensor_sub{ORB_ID(distance_sensor)};
 
-	void roverSteerSpeed(roverControl control, vehicle_attitude_setpoint_s &_att_sp, vehicle_attitude_s &att);
+
+	void roverSteerSpeed(roverControl control, int fd);
 
 	perf_counter_t	_loop_perf{perf_alloc(PC_ELAPSED, MODULE_NAME": cycle")};
 	perf_counter_t	_loop_interval_perf{perf_alloc(PC_INTERVAL, MODULE_NAME": interval")};

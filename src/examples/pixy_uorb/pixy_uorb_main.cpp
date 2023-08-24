@@ -66,32 +66,55 @@ int pixy_uorb_thread_main(int argc, char **argv)
 		// Print Pixy details to confirm Pixy is publishing data over i2c
 		pixy.getVersion();
 		pixy.version->print();
+		pixy.setLamp(1, 1);
 		usleep(1000);
 
 		// Loop indefinitely and publish vector data
 		while (1) {
 			pixy.line.getAllFeatures(LINE_VECTOR, wait);		// get line vectors from pixy
-            		if(pixy.line.numVectors) {
-				_pixy_vector.m0_x0 = pixy.line.vectors[0].m_x0;
-				_pixy_vector.m0_x1 = pixy.line.vectors[0].m_x1;
-				_pixy_vector.m0_y0 = pixy.line.vectors[0].m_y0;
-				_pixy_vector.m0_y1 = pixy.line.vectors[0].m_y1;
+			if(pixy.line.numVectors) {
+				if (pixy.line.vectors[0].m_y1 > pixy.line.vectors[0].m_y0) {
+					_pixy_vector.m0_x0 = pixy.line.vectors[0].m_x1;
+					_pixy_vector.m0_x1 = pixy.line.vectors[0].m_x0;
+					_pixy_vector.m0_y0 = pixy.line.vectors[0].m_y1;
+					_pixy_vector.m0_y1 = pixy.line.vectors[0].m_y0;
+				} else {
+					_pixy_vector.m0_x0 = pixy.line.vectors[0].m_x0;
+					_pixy_vector.m0_x1 = pixy.line.vectors[0].m_x1;
+					_pixy_vector.m0_y0 = pixy.line.vectors[0].m_y0;
+					_pixy_vector.m0_y1 = pixy.line.vectors[0].m_y1;
+				}
 				if(pixy.line.numVectors > 1) {
-					_pixy_vector.m1_x0 = pixy.line.vectors[1].m_x0;
-					_pixy_vector.m1_x1 = pixy.line.vectors[1].m_x1;
-					_pixy_vector.m1_y0 = pixy.line.vectors[1].m_y0;
-					_pixy_vector.m1_y1 = pixy.line.vectors[1].m_y1;
+					if (pixy.line.vectors[1].m_y1 > pixy.line.vectors[1].m_y0) {
+						_pixy_vector.m1_x0 = pixy.line.vectors[1].m_x1;
+						_pixy_vector.m1_x1 = pixy.line.vectors[1].m_x0;
+						_pixy_vector.m1_y0 = pixy.line.vectors[1].m_y1;
+						_pixy_vector.m1_y1 = pixy.line.vectors[1].m_y0;
+					} else {
+						_pixy_vector.m1_x0 = pixy.line.vectors[1].m_x0;
+						_pixy_vector.m1_x1 = pixy.line.vectors[1].m_x1;
+						_pixy_vector.m1_y0 = pixy.line.vectors[1].m_y0;
+						_pixy_vector.m1_y1 = pixy.line.vectors[1].m_y1;
+					}
 				} else {
 					_pixy_vector.m1_x0 = 0;
 					_pixy_vector.m1_x1 = 0;
 					_pixy_vector.m1_y0 = 0;
 					_pixy_vector.m1_y1 = 0;
 				}
-				_pixy_vector.timestamp = hrt_absolute_time();
-				_pixy_vector_pub.publish(_pixy_vector);
+			} else {
+				_pixy_vector.m0_x0 = 0;
+				_pixy_vector.m0_x1 = 0;
+				_pixy_vector.m0_y0 = 0;
+				_pixy_vector.m0_y1 = 0;
+
+				_pixy_vector.m1_x0 = 0;
+				_pixy_vector.m1_x1 = 0;
+				_pixy_vector.m1_y0 = 0;
+				_pixy_vector.m1_y1 = 0;
 			}
-
-
+			_pixy_vector.timestamp = hrt_absolute_time();
+			_pixy_vector_pub.publish(_pixy_vector);
 
 			if (threadShouldExit_uorb) {
 				threadIsRunning_uorb = false;

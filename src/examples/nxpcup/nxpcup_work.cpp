@@ -32,10 +32,18 @@
  ****************************************************************************/
 
 #include "nxpcup_work.hpp"
+#include "nxpcup_race.h"
+#include <time.h>
 
 #include <drivers/drv_hrt.h>
+#include <px4_platform_common/posix.h>
+#include "drivers/drv_pwm_output.h"
+
+
 
 using namespace time_literals;
+
+static struct distance_sensor_s distance_sensor_data;
 
 NxpCupWork::NxpCupWork() :
 	ModuleParams(nullptr),
@@ -56,33 +64,55 @@ bool NxpCupWork::init()
 	return true;
 }
 
-void NxpCupWork::roverSteerSpeed(roverControl control, vehicle_attitude_setpoint_s &_att_sp, vehicle_attitude_s &att)
+void NxpCupWork::roverSteerSpeed(roverControl control, int fd)
 {
-	// Converting steering value from percent to euler angle
-	control.steer *= -60.0f; //max turn angle 60 degree
-	control.steer *= (float)3.14159/180; // change to radians
-
-	// Get current attitude quaternion
-	matrix::Quatf current_qe{att.q[0], att.q[1], att.q[2], att.q[3]};
-
-	// Converting the euler angle into a quaternion for vehicle_attitude_setpoint
-	matrix::Eulerf euler{0.0, 0.0, control.steer};
-	matrix::Quatf qe{euler};
-
-	// Create new quaternion from the difference of current vs steering
-	matrix::Quatf new_qe;
-	new_qe = current_qe * qe.inversed();
-
-	// Throttle control of the rover
-	_att_sp.thrust_body[0] = control.speed;
-
 	// Steering control of the Rover
-	new_qe.copyTo(_att_sp.q_d);
+	// 2000 is extreme left -1
+	// 1500 is 0
+	// 1000 is extreme right 1
+	control.steer *= 60.0f;
+	int servo_pwm_rate = (control.steer + 90.0f) * 1000.0f / 180.0f + 1000.0f;
+
+	int ret = 0;
+
+	// Motor values are mapped from 0 to 1 based on MOTOR_ACTIVATION_PWM
+	// The 0 is binded to 1000.
+	int motor_pwm_rate = 1000;
+
+	// activationValue + normalizedValue * (2000 - activationValue)
+	// normalized value is control.speed which is between 0 and 1.
+
+	if (!(control.speed <= 0.0f && control.speed >= 0.0f)) {
+		if (control.speed < 0.0f) {
+			control.speed = 0.0f;
+
+		} else if (control.speed > 1.0f) {
+			control.speed = 1.0f;
+		}
+
+		motor_pwm_rate = MOTOR_ACTIVATION_PWM + control.speed * 40;
+
+	}
+
+	::ioctl(fd, PWM_SERVO_SET_MODE, PWM_SERVO_ENTER_TEST_MODE);
+	// Change speed then steerting.
+	// 3 is motor.
+	ret = px4_ioctl(fd, PWM_SERVO_SET(3), motor_pwm_rate);
+	// 1 is servo.
+	ret = px4_ioctl(fd, PWM_SERVO_SET(1), servo_pwm_rate);
+	// Hack for unsed value.
+	printf("%d", ret);
 
 }
 
 void NxpCupWork::Run()
 {
+	const char *dev = PWM_OUTPUT0_DEVICE_PATH;
+	static int fd = px4_open(dev, 0);
+	// static PID_t PID;
+	// pid_init(&PID, PID_MODE_DERIVATIV_CALC_NO_SP, 1.0f);
+	// pid_set_parameters(&PID, PID_P, PID_I, PID_D, 0.1f, 1.0f);
+
 	if (should_exit()) {
 		ScheduleClear();
 		exit_and_cleanup();
@@ -95,30 +125,17 @@ void NxpCupWork::Run()
 	// DO WORK
 	roverControl motorControl;
 
-	struct vehicle_control_mode_s _control_mode{};
-
-	_control_mode.flag_control_manual_enabled = false;
-	_control_mode.flag_control_attitude_enabled = true;
-	_control_mode.flag_control_velocity_enabled = false;
-	_control_mode.flag_control_position_enabled = false;
+	/*Get distance data*/
+	distance_sensor_sub.update();
+	distance_sensor_data = distance_sensor_sub.get();
+	// printf("AAAA %f", (double)distance_sensor_data.current_distance);
 
 	/* Get pixy data */
 	pixy_sub.update();
 	const pixy_vector_s &pixy = pixy_sub.get();
+	motorControl = raceTrack(pixy/*, PID*/);
 
-	motorControl = raceTrack(pixy);
-
-	att_sub.update();
-	struct vehicle_attitude_s att = att_sub.get();
-
-	struct vehicle_attitude_setpoint_s _att_sp{};
-
-	NxpCupWork::roverSteerSpeed(motorControl, _att_sp, att);
-
-	_control_mode.timestamp = hrt_absolute_time();
-	_control_mode_pub.publish(_control_mode);
-	_att_sp.timestamp = hrt_absolute_time();
-	_att_sp_pub.publish(_att_sp);
+	NxpCupWork::roverSteerSpeed(motorControl, fd);
 
 	perf_end(_loop_perf);
 }
@@ -150,6 +167,7 @@ int NxpCupWork::print_status()
 {
 	perf_print_counter(_loop_perf);
 	perf_print_counter(_loop_interval_perf);
+	//PX4_INFO("Distance sensor data: %f", (double)distance_sensor_data.current_distance);
 	return 0;
 }
 

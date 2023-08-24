@@ -557,7 +557,9 @@ else
 		param save
 		reboot
 	fi
-
+	pixy_uorb start
+	#srf05 start
+	nxpcup_work start
 #
 # End of autostart.
 #

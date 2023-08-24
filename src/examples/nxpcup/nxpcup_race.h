@@ -42,11 +42,27 @@
 
 #include <px4_defines.h>
 #include <uORB/topics/pixy_vector.h>
+// #include <lib/pid/pid.h>
 
-#define SPEED_FAST	0.15f
-#define SPEED_NORMAL	0.1f
-#define SPEED_SLOW	0.05f
+// #define PID_P		0.0f
+// #define PID_I		0.0f
+// #define PID_D		0.0f
+
+#define STEER_THRESHOLD 0.0f
+
+#define SPEED_FAST	0.9f
+#define SPEED_NORMAL	0.5f
+#define SPEED_SLOW	0.2f
+#define SPEED_VERY_SLOW	0.1f
 #define SPEED_STOP	0.0f
+
+// PWM values are "standardized":
+// 1000us is full reverse.
+// 1500us is neutral (activates braking to stop quickly)
+// 2000us is full forward.
+// Motor PWM rate depends on battery level and other factors.
+// Find the motor activation PWM and use that as a base for the mapping.
+#define MOTOR_ACTIVATION_PWM  1655
 
 struct roverControl {
 	float steer;
@@ -60,8 +76,7 @@ struct _vector {
 	float grad;
 };
 
-struct Vector
-{
+struct Vector {
 	void print()
 	{
 		char buf[64];
@@ -76,7 +91,7 @@ struct Vector
 	uint8_t m_y1;
 };
 
-roverControl raceTrack(const pixy_vector_s &pixy);
+roverControl raceTrack(const pixy_vector_s &pixy/*, PID_t &PID*/);
 uint8_t get_num_vectors(Vector &vec1, Vector &vec2);
 Vector copy_vectors(pixy_vector_s &pixy, uint8_t num);
 

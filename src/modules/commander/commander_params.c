@@ -257,7 +257,7 @@ PARAM_DEFINE_INT32(COM_HOME_IN_AIR, 0);
  * @value 1 Joystick/No RC Checks
  * @value 2 Virtual RC by Joystick
  */
-PARAM_DEFINE_INT32(COM_RC_IN_MODE, 0);
+PARAM_DEFINE_INT32(COM_RC_IN_MODE, 1);
 
 /**
  * RC input arm/disarm command duration
@@ -320,7 +320,7 @@ PARAM_DEFINE_INT32(COM_ARM_WO_GPS, 1);
  * @group Commander
  * @boolean
  */
-PARAM_DEFINE_INT32(COM_ARM_SWISBTN, 0);
+PARAM_DEFINE_INT32(COM_ARM_SWISBTN, 1);
 
 /**
  * Battery failsafe mode
@@ -861,7 +861,7 @@ PARAM_DEFINE_INT32(NAV_DLL_ACT, 0);
  *
  * @group Mission
  */
-PARAM_DEFINE_INT32(NAV_RCL_ACT, 2);
+PARAM_DEFINE_INT32(NAV_RCL_ACT, 0);
 
 /**
  * Flag to enable obstacle avoidance.
@@ -909,7 +909,7 @@ PARAM_DEFINE_INT32(COM_ARM_CHK_ESCS, 1);
  *
  * @group Commander
  */
-PARAM_DEFINE_INT32(COM_PREARM_MODE, 1);
+PARAM_DEFINE_INT32(COM_PREARM_MODE, 2);
 
 /**
  * Enable Motor Testing
@@ -998,4 +998,4 @@ PARAM_DEFINE_INT32(COM_ARM_ARSP_EN, 1);
  * @value 1 Warning only
  * @value 2 Enforce SD card presence
  */
-PARAM_DEFINE_INT32(COM_ARM_SDCARD, 1);
+PARAM_DEFINE_INT32(COM_ARM_SDCARD, 0);

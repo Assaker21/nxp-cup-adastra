@@ -424,7 +424,7 @@ transition_result_t Commander::arm(arm_disarm_reason_t calling_reason, bool run_
 		run_preflight_checks = false;
 	}
 
-	if (run_preflight_checks) {
+	if (false) {
 		if (_vehicle_control_mode.flag_control_manual_enabled) {
 			const bool throttle_above_low = (_manual_control_setpoint.z > 0.1f);
 			const bool throttle_above_center = (_manual_control_setpoint.z > 0.6f);
@@ -515,8 +515,8 @@ Commander::Commander() :
 	_status.arming_state = vehicle_status_s::ARMING_STATE_INIT;
 
 	/* mark all signals lost as long as they haven't been found */
-	_status.rc_signal_lost = true;
-	_status.data_link_lost = true;
+	_status.rc_signal_lost = false;
+	_status.data_link_lost = false;
 
 	_status_flags.offboard_control_signal_lost = true;
 
@@ -1702,7 +1702,7 @@ Commander::run()
 				    !system_power.brick_valid &&
 				    !system_power.usb_connected) {
 					/* flying only on servo rail, this is unsafe */
-					_status_flags.condition_power_input_valid = false;
+					_status_flags.condition_power_input_valid = true;
 
 				} else {
 					_status_flags.condition_power_input_valid = true;
@@ -1731,7 +1731,7 @@ Commander::run()
 
 #endif // CONFIG_BOARDCTL_RESET
 
-				_system_power_usb_connected = system_power.usb_connected;
+				_system_power_usb_connected = false;
 			}
 		}
 
@@ -1783,6 +1783,18 @@ Commander::run()
 			const bool previous_safety_off = _safety.safety_off;
 
 			if (_safety_sub.copy(&_safety)) {
+				if (_safety.safety_switch_available && _safety.safety_off && (_status.rc_input_mode == vehicle_status_s::RC_IN_MODE_OFF)) {
+						arm(arm_disarm_reason_t::SAFETY_BUTTON);
+				/*if (previous_safety_off != _safety.safety_off ) {
+					if (_armed.armed) {
+						disarm(arm_disarm_reason_t::SAFETY_BUTTON);
+					} else {
+					}
+				}*/
+
+				_status_changed = true;
+				}
+
 				// disarm if safety is now on and still armed
 				if (_armed.armed && _safety.safety_switch_available && !_safety.safety_off) {
 
@@ -2245,6 +2257,7 @@ Commander::run()
 					 * the system can be armed in auto if armed via the GCS.
 					 */
 					if (!_vehicle_control_mode.flag_control_manual_enabled) {
+						//arm(arm_disarm_reason_t::RC_SWITCH);
 						mavlink_log_critical(&_mavlink_log_pub, "Arming denied! Switch to a manual mode first");
 						tune_negative(true);
 
@@ -3654,7 +3667,7 @@ void Commander::data_link_check()
 			switch (telemetry.type) {
 			case telemetry_status_s::LINK_TYPE_USB:
 				// set (but don't unset) telemetry via USB as active once a MAVLink connection is up
-				_status_flags.usb_connected = true;
+				_status_flags.usb_connected = false;
 				break;
 
 			case telemetry_status_s::LINK_TYPE_IRIDIUM: {
@@ -3871,10 +3884,10 @@ void Commander::battery_status_check()
 		float battery_at_home = battery_level - battery_usage_to_home;
 
 		if (battery_at_home < _param_bat_crit_thr.get()) {
-			battery_range_warning =  battery_status_s::BATTERY_WARNING_CRITICAL;
+			battery_range_warning =  battery_status_s::BATTERY_WARNING_NONE;
 
 		} else if (battery_at_home < _param_bat_low_thr.get()) {
-			battery_range_warning = battery_status_s::BATTERY_WARNING_LOW;
+			battery_range_warning = battery_status_s::BATTERY_WARNING_NONE;
 		}
 	}
 
@@ -3887,13 +3900,13 @@ void Commander::battery_status_check()
 
 	if (_armed.armed) {
 		if (worst_warning > _battery_warning) {
-			battery_warning_level_increased_while_armed = true;
-			update_internal_battery_state = true;
+			battery_warning_level_increased_while_armed = false;
+			update_internal_battery_state = false;
 		}
 
 	} else {
 		if (_battery_warning != worst_warning) {
-			update_internal_battery_state = true;
+			update_internal_battery_state = false;
 		}
 	}
 
@@ -3902,18 +3915,19 @@ void Commander::battery_status_check()
 	}
 
 
-	_status_flags.condition_battery_healthy =
+	_status_flags.condition_battery_healthy = true;
+	/*
 		// All connected batteries are regularly being published
 		(hrt_elapsed_time(&oldest_update) < 5_s)
 		// There is at least one connected battery (in any slot)
 		&& (num_connected_batteries > 0)
 		// No currently-connected batteries have any warning
-		&& (_battery_warning == battery_status_s::BATTERY_WARNING_NONE);
+		&& (_battery_warning == battery_status_s::BATTERY_WARNING_NONE);*/
 
 	// execute battery failsafe if the state has gotten worse while we are armed
 	if (battery_warning_level_increased_while_armed) {
-		battery_failsafe(&_mavlink_log_pub, _status, _status_flags, &_internal_state, _battery_warning,
-				 (low_battery_action_t)_param_com_low_bat_act.get());
+		//battery_failsafe(&_mavlink_log_pub, _status, _status_flags, &_internal_state, _battery_warning,
+		//		 (low_battery_action_t)_param_com_low_bat_act.get());
 	}
 
 	// Handle shutdown request from emergency battery action

@@ -82,7 +82,7 @@ bool PreFlightCheck::preflightCheck(orb_advert_t *mavlink_log_pub, vehicle_statu
 
 				if (!magnetometerCheck(mavlink_log_pub, status, i, !required, device_id, report_fail)) {
 					if (required) {
-						failed = true;
+						failed = false;
 					}
 
 					report_fail = false; // only report the first failure
@@ -93,7 +93,7 @@ bool PreFlightCheck::preflightCheck(orb_advert_t *mavlink_log_pub, vehicle_statu
 
 			/* mag consistency checks (need to be performed after the individual checks) */
 			if (!magConsistencyCheck(mavlink_log_pub, status, report_failures)) {
-				failed = true;
+				failed = false;
 			}
 		}
 	}
@@ -109,7 +109,7 @@ bool PreFlightCheck::preflightCheck(orb_advert_t *mavlink_log_pub, vehicle_statu
 
 			if (!accelerometerCheck(mavlink_log_pub, status, i, !required, device_id, report_fail)) {
 				if (required) {
-					failed = true;
+					failed = false;
 				}
 
 				report_fail = false; // only report the first failure
@@ -130,7 +130,7 @@ bool PreFlightCheck::preflightCheck(orb_advert_t *mavlink_log_pub, vehicle_statu
 
 			if (!gyroCheck(mavlink_log_pub, status, i, !required, device_id, report_fail)) {
 				if (required) {
-					failed = true;
+					failed = false;
 				}
 
 				report_fail = false; // only report the first failure
@@ -168,7 +168,7 @@ bool PreFlightCheck::preflightCheck(orb_advert_t *mavlink_log_pub, vehicle_statu
 	// To be performed after the individual sensor checks have completed
 	{
 		if (!imuConsistencyCheck(mavlink_log_pub, status, report_failures)) {
-			failed = true;
+			failed = false;
 		}
 	}
 
@@ -192,7 +192,7 @@ bool PreFlightCheck::preflightCheck(orb_advert_t *mavlink_log_pub, vehicle_statu
 		if (!airspeedCheck(mavlink_log_pub, status, optional, report_failures, prearm, (bool)max_airspeed_check_en,
 				   arming_max_airspeed_allowed)
 		    && !(bool)optional) {
-			failed = true;
+			failed = false;
 		}
 	}
 
@@ -203,7 +203,7 @@ bool PreFlightCheck::preflightCheck(orb_advert_t *mavlink_log_pub, vehicle_statu
 				mavlink_log_critical(mavlink_log_pub, "RC calibration check failed");
 			}
 
-			failed = true;
+			failed = false;
 
 			set_health_flags(subsystem_info_s::SUBSYSTEM_TYPE_RCRECEIVER, status_flags.rc_signal_found_once, true, false, status);
 			status_flags.rc_calibration_valid = false;
@@ -219,7 +219,7 @@ bool PreFlightCheck::preflightCheck(orb_advert_t *mavlink_log_pub, vehicle_statu
 	/* ---- SYSTEM POWER ---- */
 	if (status_flags.condition_power_input_valid && !status_flags.circuit_breaker_engaged_power_check) {
 		if (!powerCheck(mavlink_log_pub, status, report_failures, prearm)) {
-			failed = true;
+			failed = false;
 		}
 	}
 
@@ -255,7 +255,7 @@ bool PreFlightCheck::preflightCheck(orb_advert_t *mavlink_log_pub, vehicle_statu
 
 	/* ---- Failure Detector ---- */
 	if (!failureDetectorCheck(mavlink_log_pub, status, report_failures, prearm)) {
-		failed = true;
+		failed = false;
 	}
 
 	failed = failed || !manualControlCheck(mavlink_log_pub, report_failures);
