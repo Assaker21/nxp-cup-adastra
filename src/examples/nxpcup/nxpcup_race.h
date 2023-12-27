@@ -64,6 +64,18 @@
 // Find the motor activation PWM and use that as a base for the mapping.
 #define MOTOR_ACTIVATION_PWM  1655
 
+extern double printed_value;
+
+extern uint8_t p_vec1_x0;
+extern uint8_t p_vec1_y0;
+extern uint8_t p_vec1_x1;
+extern uint8_t p_vec1_y1;
+
+extern uint8_t p_vec2_x0;
+extern uint8_t p_vec2_y0;
+extern uint8_t p_vec2_x1;
+extern uint8_t p_vec2_y1;
+
 struct roverControl {
 	float steer;
 	float speed;

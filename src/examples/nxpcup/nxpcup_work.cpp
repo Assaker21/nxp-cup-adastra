@@ -165,9 +165,19 @@ int NxpCupWork::task_spawn(int argc, char *argv[])
 
 int NxpCupWork::print_status()
 {
-	perf_print_counter(_loop_perf);
-	perf_print_counter(_loop_interval_perf);
+	//perf_print_counter(_loop_perf);
+	//perf_print_counter(_loop_interval_perf);
 	//PX4_INFO("Distance sensor data: %f", (double)distance_sensor_data.current_distance);
+
+	printf("Value 1: %0.2f\n", printed_value);
+	char buf[64];
+	sprintf(buf, "vec1: 0=(%d %d) 1=(%d %d)\n", p_vec1_x0, p_vec1_y0, p_vec1_x1, p_vec1_y1);
+	printf(buf);
+
+	char buff[64];
+	sprintf(buff, "vec2: 0=(%d %d) 1=(%d %d)\n", p_vec2_x0, p_vec2_y0, p_vec2_x1, p_vec2_y1);
+	printf(buff);
+
 	return 0;
 }
 

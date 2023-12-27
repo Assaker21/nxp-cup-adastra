@@ -116,6 +116,24 @@ int pixy_uorb_thread_main(int argc, char **argv)
 			_pixy_vector.timestamp = hrt_absolute_time();
 			_pixy_vector_pub.publish(_pixy_vector);
 
+			printf("All vecs:\n");
+
+			for(int i = 0; i < pixy.line.numVectors; i++) {
+				char buf[128];
+				sprintf(buf, "vec%d: x0=%d y0=%d, x1=%d y1=%d\n", i, pixy.line.vectors[i].m_x0, pixy.line.vectors[i].m_y0, pixy.line.vectors[i].m_x1, pixy.line.vectors[i].m_y1);
+				printf(buf);
+			}
+
+			printf("Processed vecs:\n");
+
+			char buf[128];
+			sprintf(buf, "vec1: x0=%d y0=%d, x1=%d y1=%d\n", _pixy_vector.m0_x0, _pixy_vector.m0_x1, _pixy_vector.m0_y0, _pixy_vector.m0_y1);
+			printf(buf);
+
+			char buff[128];
+			sprintf(buff, "vec2: x0=%d y0=%d, x1=%d y1=%d\n\n", _pixy_vector.m1_x0, _pixy_vector.m1_x1, _pixy_vector.m1_y0, _pixy_vector.m1_y1);
+			printf(buff);
+
 			if (threadShouldExit_uorb) {
 				threadIsRunning_uorb = false;
 				PX4_INFO("Exit Pixy uORB Thread!\n");
