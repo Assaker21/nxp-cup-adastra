@@ -70,7 +70,7 @@ void NxpCupWork::roverSteerSpeed(roverControl control, int fd)
 	// 2000 is extreme left -1
 	// 1500 is 0
 	// 1000 is extreme right 1
-	control.steer *= 60.0f;
+	control.steer *= -90.0f;
 	int servo_pwm_rate = (control.steer + 90.0f) * 1000.0f / 180.0f + 1000.0f;
 
 	int ret = 0;

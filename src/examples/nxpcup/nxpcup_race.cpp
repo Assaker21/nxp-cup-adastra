@@ -44,6 +44,7 @@ roverControl raceTrack(const pixy_vector_s &pixy)
 	Vector main_vec;
 	Vector vec1 = copy_vectors(pixy, 1);
 	Vector vec2 = copy_vectors(pixy, 2);
+	float pente = pixy.pente;
 	uint8_t frameWidth = 79;
 	uint8_t frameHeight = 52;
 	int16_t window_center = (frameWidth / 2);
@@ -112,16 +113,32 @@ roverControl raceTrack(const pixy_vector_s &pixy)
 	p_vec2_y0 = vec2.m_y0;
 	p_vec2_y1 = vec2.m_y1;
 
-	control.speed = 0.1f;
-	control.steer = -control.steer;
+	control.speed = 0.3f; // 0.7f
+	float steeringSensitivity = 1; //1
+	control.steer = (1 / pente) * steeringSensitivity;
+	//control.steer = float(atan(control.steer)) / 1.5708f;
+	//control.steer *= 1.0f;
+	//control.steer = -control.steer;
 
 	double steering_value = control.steer;
-	if(control.steer > 1) {
+	float threshold = 0;
+	if(control.steer < threshold && control.steer > -threshold) {
+		control.steer = 0;
+	}
+	else if(control.steer > 1) {
 		control.steer = 1;
 	}
 	else if(control.steer < -1) {
 		control.steer = -1;
 	}
+
+	if(control.steer >= 0.8f || control.steer <= -0.8f) {
+		control.speed = 0.3f;
+	}
+
+
+
+	//control.steer = 1;
 
 	printed_value = steering_value;
 

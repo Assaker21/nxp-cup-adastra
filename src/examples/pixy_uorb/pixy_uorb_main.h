@@ -50,6 +50,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <sched.h>
+#include <cmath>
 
 #include <uORB/Subscription.hpp>
 #include <uORB/Publication.hpp>

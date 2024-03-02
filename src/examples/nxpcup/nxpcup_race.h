@@ -42,6 +42,7 @@
 
 #include <px4_defines.h>
 #include <uORB/topics/pixy_vector.h>
+#include <cmath>
 // #include <lib/pid/pid.h>
 
 // #define PID_P		0.0f
@@ -62,7 +63,7 @@
 // 2000us is full forward.
 // Motor PWM rate depends on battery level and other factors.
 // Find the motor activation PWM and use that as a base for the mapping.
-#define MOTOR_ACTIVATION_PWM  1655
+#define MOTOR_ACTIVATION_PWM  1535
 
 extern double printed_value;
 
