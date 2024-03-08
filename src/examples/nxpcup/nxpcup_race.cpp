@@ -39,7 +39,7 @@ Vector copy_vectors(const pixy_vector_s &pixy, uint8_t num) {
 	return vec;
 }
 
-roverControl raceTrack(const pixy_vector_s &pixy)
+roverControl raceTrack(const pixy_vector_s &pixy, PID_t &PID)
 {
 	Vector main_vec;
 	Vector vec1 = copy_vectors(pixy, 1);
@@ -53,6 +53,13 @@ roverControl raceTrack(const pixy_vector_s &pixy)
 	//static hrt_abstime no_line_time = 0;		// time variable for time since no line detected
 	//hrt_abstime time_diff = 0;
 	//static bool first_call = true;
+
+	static hrt_abstime old_t = hrt_absolute_time();
+	hrt_abstime t = hrt_absolute_time();
+	double diff = difftime(t, old_t);
+	// milliseconds
+	diff = diff / 1000;
+
 	uint8_t num_vectors = get_num_vectors(vec1, vec2);
 
 
@@ -116,12 +123,17 @@ roverControl raceTrack(const pixy_vector_s &pixy)
 	control.speed = 0.3f; // 0.7f
 	float steeringSensitivity = 1; //1
 	control.steer = (1 / pente) * steeringSensitivity;
-	//control.steer = float(atan(control.steer)) / 1.5708f;
-	//control.steer *= 1.0f;
-	//control.steer = -control.steer;
+	float angle = float(atan(control.steer)) / 1.5708f;
+	control.steer = angle * 1.3f;
+
 
 	double steering_value = control.steer;
-	float threshold = 0;
+
+	control.steer = pid_calculate(&PID, 0.0f, angle, 0.0f, (float)diff);
+	printed_value = steering_value;
+	printed_value = control.steer;
+
+	float threshold = 0.0f;
 	if(control.steer < threshold && control.steer > -threshold) {
 		control.steer = 0;
 	}
@@ -136,11 +148,7 @@ roverControl raceTrack(const pixy_vector_s &pixy)
 		control.speed = 0.3f;
 	}
 
-
-
 	//control.steer = 1;
-
-	printed_value = steering_value;
 
 	return control;
 }

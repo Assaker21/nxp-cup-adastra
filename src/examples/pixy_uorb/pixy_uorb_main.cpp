@@ -139,6 +139,8 @@ int pixy_uorb_thread_main(int argc, char **argv)
 			float sumX = 0;
 			float sumY = 0;
 
+			float pente_normalized = 0;
+
 			for (int i = 0; i < pixy.line.numVectors; i++) {
 				char buf[128];
 				sprintf(buf, "Vec%d: x0=%d y0=%d, x1=%d y1=%d\n", i, pixy.line.vectors[i].m_x0, pixy.line.vectors[i].m_y0,
@@ -159,20 +161,22 @@ int pixy_uorb_thread_main(int argc, char **argv)
 					x1 = temp;
 				}
 
-				float x = x0 - x1;
-				float y = y0 - y1;
+				pente_normalized += (y1 - y0) / (x0 - x1);
+
+				/*float x = x0 - x1;
+				float y = y0 - y1;*/
 
 				float newX = 0;
 				float newY = 0;
 
-				if (x < 0) {
+				/*if (x < 0) {
 					newX = x * sin(0.348f) + y * cos(0.348f);
 					newY = -x * cos(0.348f) + y * sin(0.348f);
 
 				} else {
 					newX = x * sin(0.348f) - y * cos(0.348f);
 					newY = x * cos(0.348f) + y * sin(0.348f);
-				}
+				}*/
 
 				sumX0 += x0;
 				sumX1 += x1;
@@ -183,7 +187,8 @@ int pixy_uorb_thread_main(int argc, char **argv)
 				sumX += newX;
 				sumY += newY;
 				char buff[128];
-				sprintf(buff, "Vec%d: xold=%.2f yold=%.2f, x=%.2f y=%.2f\n", i, (double)(x0 - x1), (double)(y0 - y1), (double)newX, (double)newY);
+				sprintf(buff, "Vec%d: xold=%.2f yold=%.2f, x=%.2f y=%.2f\n", i, (double)(x0 - x1), (double)(y0 - y1), (double)newX,
+					(double)newY);
 
 				printf(buff);
 				printf(buf);
@@ -193,8 +198,10 @@ int pixy_uorb_thread_main(int argc, char **argv)
 
 			if ((double)(sumX1 - sumX0) > 0 || (double)(sumX1 - sumX0) < 0) {
 				pente = (float)(sumY0 - sumY1) / (float)(sumX1 - sumX0);
-				pente = (float)(sumY) / (float)(sumX);
+				//pente = (float)(sumY) / (float)(sumX);
 			}
+
+			//pente = pente_normalized;
 
 			_pixy_vector.pente = pente;
 
@@ -202,7 +209,8 @@ int pixy_uorb_thread_main(int argc, char **argv)
 			_pixy_vector_pub.publish(_pixy_vector);
 
 			char buuuf[128];
-			sprintf(buuuf, "\nMain vec: x0=%.2f y0=%.2f, x1=%.2f y1=%.2f\n", (double)sumX0, (double)sumX1, (double)sumY0, (double)sumY1);
+			sprintf(buuuf, "\nMain vec: x0=%.2f y0=%.2f, x1=%.2f y1=%.2f\n", (double)sumX0, (double)sumX1, (double)sumY0,
+				(double)sumY1);
 			printf(buuuf);
 
 			float mainVecMag = (sumX0 - sumX1) * (sumX0 - sumX1) + (sumY0 - sumY1) * (sumY0 - sumY1);
