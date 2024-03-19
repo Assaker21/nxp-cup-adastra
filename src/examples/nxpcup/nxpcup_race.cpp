@@ -147,7 +147,9 @@ roverControl raceTrack(const pixy_vector_s &pixy, PID_t &PID)
 	if(control.steer >= 0.8f || control.steer <= -0.8f) {
 		control.speed = 0.3f;
 	}
-
+	else {
+		control.speed = 0.3f;
+	}
 	//control.steer = 1;
 
 	return control;

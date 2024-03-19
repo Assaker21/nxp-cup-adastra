@@ -45,9 +45,9 @@
 #include <cmath>
 #include <lib/pid/pid.h>
 
-#define PID_P		5.0f
-#define PID_I		0.0f
-#define PID_D		1.0f
+#define PID_P		0.5f // 5.0f
+#define PID_I		0.0f // 0.0f
+#define PID_D		0.0f // 1.0f
 
 #define STEER_THRESHOLD 5
 
@@ -68,7 +68,7 @@
 // 2000us is full forward.
 // Motor PWM rate depends on battery level and other factors.
 // Find the motor activation PWM and use that as a base for the mapping.
-#define MOTOR_ACTIVATION_PWM  1615
+#define MOTOR_ACTIVATION_PWM  1660
 
 extern double printed_value;
 
