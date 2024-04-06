@@ -63,4 +63,12 @@
 #include "Pixy2Line.h"
 #include "Pixy2Video.h"
 
+#define IGNORED_THRESHOLD 7
+#define CAMERA_ANGLE 0.5f
+#define SCREEN_WIDTH 79.0f
+#define SCREEN_HEIGHT 52.0f
+
+float transformPointX(float x, float y, float angle, float maxX, float maxY);
+
+
 #endif /*PIXY_UORB_START_*/

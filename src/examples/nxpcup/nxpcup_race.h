@@ -44,10 +44,17 @@
 #include <uORB/topics/pixy_vector.h>
 #include <cmath>
 #include <lib/pid/pid.h>
+#include <cmath>
+//#include <vector>
 
-#define PID_P		2.0f // 5.0f
+
+#define PID_P		1.0f // 2.5f
 #define PID_I		0.0f // 0.0f
-#define PID_D		0.0f // 1.0f
+#define PID_D		3.0f // 1.0f
+
+#define PID2_P		100.0f
+#define PID2_I  	0.0f
+#define PID2_D		0.0f
 
 #define STEER_THRESHOLD 5
 
@@ -68,7 +75,7 @@
 // 2000us is full forward.
 // Motor PWM rate depends on battery level and other factors.
 // Find the motor activation PWM and use that as a base for the mapping.
-#define MOTOR_ACTIVATION_PWM  1570
+#define MOTOR_ACTIVATION_PWM  1570 // 1665 1570
 
 extern double printed_value;
 
@@ -81,6 +88,12 @@ extern uint8_t p_vec2_x0;
 extern uint8_t p_vec2_y0;
 extern uint8_t p_vec2_x1;
 extern uint8_t p_vec2_y1;
+
+extern double* powerLookupTable;
+extern uint8_t initialized;
+
+void onInitialize();
+double customPower(double x);
 
 struct roverControl {
 	float steer;
@@ -109,7 +122,7 @@ struct Vector {
 	uint8_t m_y1;
 };
 
-roverControl raceTrack(const pixy_vector_s &pixy, PID_t &PID);
+roverControl raceTrack(const pixy_vector_s &pixy, PID_t &PID, PID_t &PID2);
 uint8_t get_num_vectors(Vector &vec1, Vector &vec2);
 Vector copy_vectors(pixy_vector_s &pixy, uint8_t num);
 

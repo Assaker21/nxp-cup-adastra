@@ -136,16 +136,9 @@ int pixy_uorb_thread_main(int argc, char **argv)
 			float sumY0 = 0;
 			float sumY1 = 0;
 
-			float sumX = 0;
-			float sumY = 0;
-
-			float pente_normalized = 0;
+			char buffer[128];
 
 			for (int i = 0; i < pixy.line.numVectors; i++) {
-				char buf[128];
-				sprintf(buf, "Vec%d: x0=%d y0=%d, x1=%d y1=%d\n", i, pixy.line.vectors[i].m_x0, pixy.line.vectors[i].m_y0,
-					pixy.line.vectors[i].m_x1, pixy.line.vectors[i].m_y1);
-
 				float x0 = (float)pixy.line.vectors[i].m_x0;
 				float x1 = (float)pixy.line.vectors[i].m_x1;
 				float y0 = (float)pixy.line.vectors[i].m_y0;
@@ -161,87 +154,53 @@ int pixy_uorb_thread_main(int argc, char **argv)
 					x1 = temp;
 				}
 
-				pente_normalized += (y1 - y0) / (x0 - x1);
+				sprintf(buffer, "Vec%d: x0=%d y0=%d, x1=%d y1=%d\n", i, (int)x0, (int)y0, (int)x1, (int)y1);
+				printf(buffer);
 
-				/*float x = x0 - x1;
-				float y = y0 - y1;*/
+				x0 = transformPointX(x0, y0, CAMERA_ANGLE, SCREEN_WIDTH, SCREEN_HEIGHT);
+				x1 = transformPointX(x1, y1, CAMERA_ANGLE, SCREEN_WIDTH, SCREEN_HEIGHT);
 
-				float newX = 0;
-				float newY = 0;
+				sprintf(buffer, "Transformed vec%d: x0=%.2f y0=%.2f, x1=%.2f y1=%.2f\n", i, (double)x0, (double)y0, (double)x1, (double)y1);
+				printf(buffer);
 
-				/*if (x < 0) {
-					newX = x * sin(0.348f) + y * cos(0.348f);
-					newY = -x * cos(0.348f) + y * sin(0.348f);
+				if (absoluteValue((double)(y1 - y0)) > IGNORED_THRESHOLD) {
+					sumX0 += x0;
+					sumX1 += x1;
+					sumY0 += y0;
+					sumY1 += y1;
 
 				} else {
-					newX = x * sin(0.348f) - y * cos(0.348f);
-					newY = x * cos(0.348f) + y * sin(0.348f);
-				}*/
-
-				sumX0 += x0;
-				sumX1 += x1;
-				sumY0 += y0;
-				sumY1 += y1;
-
-
-				sumX += newX;
-				sumY += newY;
-				char buff[128];
-				sprintf(buff, "Vec%d: xold=%.2f yold=%.2f, x=%.2f y=%.2f\n", i, (double)(x0 - x1), (double)(y0 - y1), (double)newX,
-					(double)newY);
-
-				printf(buff);
-				printf(buf);
+					sprintf(buffer, "Vec%d was ignored\n", i);
+					printf(buffer);
+				}
 			}
+
+			sumX0 /= pixy.line.numVectors;
+			sumY0 /= pixy.line.numVectors;
+			sumX1 /= pixy.line.numVectors;
+			sumY1 /= pixy.line.numVectors;
 
 			float pente = 0;
 
 			if ((double)(sumX1 - sumX0) > 0 || (double)(sumX1 - sumX0) < 0) {
 				pente = (float)(sumY0 - sumY1) / (float)(sumX1 - sumX0);
-				//pente = (float)(sumY) / (float)(sumX);
+				pente = 1 / pente;
 			}
-
-			//pente = pente_normalized;
 
 			_pixy_vector.pente = pente;
 
 			_pixy_vector.timestamp = hrt_absolute_time();
 			_pixy_vector_pub.publish(_pixy_vector);
 
-			char buuuf[128];
-			sprintf(buuuf, "\nMain vec: x0=%.2f y0=%.2f, x1=%.2f y1=%.2f\n", (double)sumX0, (double)sumX1, (double)sumY0,
+			sprintf(buffer, "\nMain vec: x0=%.2f y0=%.2f, x1=%.2f y1=%.2f\n", (double)sumX0, (double)sumY0, (double)sumX1,
 				(double)sumY1);
-			printf(buuuf);
+			printf(buffer);
 
-			float mainVecMag = (sumX0 - sumX1) * (sumX0 - sumX1) + (sumY0 - sumY1) * (sumY0 - sumY1);
-			char buuuuuf[128];
-			sprintf(buuuuuf, "\nMain vec mag squared: %.2f\n", (double)mainVecMag);
-			printf(buuuuuf);
+			sprintf(buffer, "\nPente of the main vector=%.2f", (double)pente);
+			printf(buffer);
 
-			mainVecMag = sqrt(mainVecMag);
-			char buauuf[128];
-			sprintf(buauuf, "\nMain vec mag: %.2f\n", (double)mainVecMag);
-			printf(buauuf);
-
-			printf("\nPente of the sum");
-			char bufff[128];
-			sprintf(bufff, "=%.2f", (double)pente);
-			printf(bufff);
-
-			printf("\nSteering value");
-			char buuufff[128];
-			sprintf(buuufff, "=%.2f, without atan: %.2f", (double)(atan(1 / pente) / 1.5708f), (double)(1 / pente));
-			printf(buuufff);
-
-			/*printf("Processed vecs:\n");
-
-			char buf[128];
-			sprintf(buf, "vec1: x0=%d y0=%d, x1=%d y1=%d\n", _pixy_vector.m0_x0, _pixy_vector.m0_x1, _pixy_vector.m0_y0, _pixy_vector.m0_y1);
-			printf(buf);
-
-			char buff[128];
-			sprintf(buff, "vec2: x0=%d y0=%d, x1=%d y1=%d\n\n", _pixy_vector.m1_x0, _pixy_vector.m1_x1, _pixy_vector.m1_y0, _pixy_vector.m1_y1);
-			printf(buff);*/
+			sprintf(buffer, "\nNO PID: steering value=%.2f, without atan: %.2f", (double)(atan(pente) / 1.5708f * 1.3f), (double)(pente));
+			printf(buffer);
 
 			if (threadShouldExit_uorb) {
 				threadIsRunning_uorb = false;
@@ -253,6 +212,11 @@ int pixy_uorb_thread_main(int argc, char **argv)
 	}
 
 	return 0;
+}
+
+float transformPointX(float x, float y, float angle, float maxX, float maxY)
+{
+	return (1 + (1 - y / maxY) * tan(angle)) * (x - maxX / 2) + maxX / 2;
 }
 
 extern "C" __EXPORT int pixy_uorb_main(int argc, char *argv[]);

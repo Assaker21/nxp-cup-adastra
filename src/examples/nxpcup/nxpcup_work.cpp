@@ -110,8 +110,11 @@ void NxpCupWork::Run()
 	const char *dev = PWM_OUTPUT0_DEVICE_PATH;
 	static int fd = px4_open(dev, 0);
 	static PID_t PID;
+	static PID_t PID2;
 	pid_init(&PID, PID_MODE_DERIVATIV_CALC_NO_SP, 1.0f);
+	pid_init(&PID2, PID_MODE_DERIVATIV_CALC_NO_SP, 1.0f);
 	pid_set_parameters(&PID, PID_P, PID_I, PID_D, 0.1f, 1.0f);
+	pid_set_parameters(&PID2, PID2_P, PID2_I, PID2_D, 0.1f, 1.0f);
 
 	if (should_exit()) {
 		ScheduleClear();
@@ -133,7 +136,7 @@ void NxpCupWork::Run()
 	/* Get pixy data */
 	pixy_sub.update();
 	const pixy_vector_s &pixy = pixy_sub.get();
-	motorControl = raceTrack(pixy, PID);
+	motorControl = raceTrack(pixy, PID, PID2);
 
 	NxpCupWork::roverSteerSpeed(motorControl, fd);
 
