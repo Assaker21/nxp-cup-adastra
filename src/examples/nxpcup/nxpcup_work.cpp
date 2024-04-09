@@ -77,7 +77,7 @@ void NxpCupWork::roverSteerSpeed(roverControl control, int fd)
 
 	// Motor values are mapped from 0 to 1 based on MOTOR_ACTIVATION_PWM
 	// The 0 is binded to 1000.
-	int motor_pwm_rate = 1000;
+	int motor_pwm_rate = 1500;
 
 	// activationValue + normalizedValue * (2000 - activationValue)
 	// normalized value is control.speed which is between 0 and 1.
@@ -111,10 +111,15 @@ void NxpCupWork::Run()
 	static int fd = px4_open(dev, 0);
 	static PID_t PID;
 	static PID_t PID2;
+	static PID_t PID3;
+
 	pid_init(&PID, PID_MODE_DERIVATIV_CALC_NO_SP, 1.0f);
 	pid_init(&PID2, PID_MODE_DERIVATIV_CALC_NO_SP, 1.0f);
+	pid_init(&PID3, PID_MODE_DERIVATIV_CALC_NO_SP, 1.0f);
+
 	pid_set_parameters(&PID, PID_P, PID_I, PID_D, 0.1f, 1.0f);
 	pid_set_parameters(&PID2, PID2_P, PID2_I, PID2_D, 0.1f, 1.0f);
+	pid_set_parameters(&PID3, PID3_P, PID3_I, PID3_D, 0.1f, 1.0f);
 
 	if (should_exit()) {
 		ScheduleClear();
@@ -136,7 +141,7 @@ void NxpCupWork::Run()
 	/* Get pixy data */
 	pixy_sub.update();
 	const pixy_vector_s &pixy = pixy_sub.get();
-	motorControl = raceTrack(pixy, PID, PID2);
+	motorControl = raceTrack(pixy, PID, PID2, PID3);
 
 	NxpCupWork::roverSteerSpeed(motorControl, fd);
 

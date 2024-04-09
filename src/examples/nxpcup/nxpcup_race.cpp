@@ -50,7 +50,7 @@ Vector copy_vectors(const pixy_vector_s &pixy, uint8_t num)
 	return vec;
 }
 
-roverControl raceTrack(const pixy_vector_s &pixy, PID_t &PID, PID_t &PID2)
+roverControl raceTrack(const pixy_vector_s &pixy, PID_t &PID, PID_t &PID2, PID_t &PID3)
 {
 	//Vector main_vec;
 	onInitialize();
@@ -151,63 +151,40 @@ roverControl raceTrack(const pixy_vector_s &pixy, PID_t &PID, PID_t &PID2)
 		sign = -1;
 	}
 
+	control.steer = sign;
+
 
 	double pid1 = pid_calculate(&PID, 0.0f, angle, 0.0f, (float)diff);
 	double pid2 = pid_calculate(&PID2, 0.0f, angle, 0.0f, (float)diff);
+	double pid3 = pid_calculate(&PID3, 0.0f, angle, 0.0f, (float)diff);
 
-	if(angle < 0.4f) {
+	if (angle < 0.3f) { // slow: 0.15f -- fast: 0.3f
 		control.steer = pid1;
-	}
-	else {
+	} else if (angle < 0.6f) {
 		control.steer = pid2;
-		control.steer = sign;
+	} else {
+		control.steer = pid3;
 	}
 
-	//control.steer = pid2;
+	if (abs(control.steer) < 0.15f) {
+		control.speed = 0.5f;
 
-	//control.steer = pid_calculate(&PID, 0.0f, angle, 0.0f, (float)diff);
+	} else if (abs(control.steer) < 0.6f) {
+		control.speed = 0.3f;
+
+	} else {
+		control.speed = 0.25f;
+	}
 
 	printed_value = steering_value;
 	printed_value = control.steer;
 
-	//float threshold = 0.0f;
-	/*float sign = 0;
-
-	if (control.steer > 0) {
-		sign = 1;
-
-	} else if (control.steer < 0) {
-		sign = -1;
-	}
-
-	control.steer = std::abs(control.steer);
-	control.steer = customPower(control.steer);*/
-	//control.steer = pow(control.steer, 1.0f);
-	//control.steer *= sign;
-	//control.steer *= control.steer * sign;
-	//control.steer *= control.steer * sign;
-
-	/*if (control.steer < threshold && control.steer > -threshold) {
-		control.steer = 0;
-
-	} else if (control.steer > 1) {
-		control.steer = 1;
-
-	} else if (control.steer < -1) {
-		control.steer = -1;
-	}*/
-
-	if (control.steer >= 0.8f || control.steer <= -0.8f) {
-		control.speed = 0.8f;
-
-	} else {
-		control.speed = 1.0f;
-	}
 
 	if (noVectors == 1) {
-		control.speed = 0.0f;
+		control.speed = 0.1f;
 	}
 
+	//control.speed = 0.0f;
 
 
 	return control;
@@ -222,9 +199,9 @@ void onInitialize()
 	//const double stepSize = 1.0 / (numValues - 1); // Step size to cover range from 0 to 1
 
 	//for (int i = 0; i < 101; ++i) {
-		/*double x = i * stepSize;
-		double value = std::pow(x, 1.4);*/
-		//value = 1;
+	/*double x = i * stepSize;
+	double value = std::pow(x, 1.4);*/
+	//value = 1;
 	//	powerLookupTable[i] = staticArray[i];
 	//}
 
@@ -232,10 +209,15 @@ void onInitialize()
 
 }
 
-	double staticArray[101] = {0, 0.001f, 0.004f, 0.007f, 0.011f, 0.015f, 0.019f, 0.024f, 0.029f, 0.034f, 0.039f, 0.045f, 0.051f, 0.057f, 0.063f, 0.070f, 0.076f, 0.083f, 0.090f, 0.097f, 0.105f, 0.112f, 0.120f, 0.127f, 0.135f, 0.143f, 0.151f, 0.159f, 0.168f, 0.176f, 0.185f, 0.194f, 0.202f, 0.211f, 0.220f, 0.229f, 0.239f, 0.248f, 0.258f, 0.267f, 0.277f, 0.287f, 0.296f, 0.306f, 0.316f, 0.326f, 0.337f, 0.347f, 0.357f, 0.368f, 0.378f, 0.389f, 0.400f, 0.411f, 0.422f, 0.433f, 0.444f, 0.455f, 0.466f, 0.477f, 0.489f, 0.500f, 0.512f, 0.523f, 0.535f, 0.547f, 0.558f, 0.570f, 0.582f, 0.594f, 0.606f, 0.619f, 0.631f, 0.643f, 0.656f, 0.668f, 0.680f, 0.693f, 0.706f, 0.718f, 0.731f, 0.744f, 0.757f, 0.770f, 0.783f, 0.796f, 0.809f, 0.822f, 0.836f, 0.849f, 0.862f, 0.876f, 0.889f, 0.903f, 0.917f, 0.930f, 0.944f, 0.958f, 0.972f, 0.986f, 1.0f};
+double staticArray[101] = {0, 0.001f, 0.004f, 0.007f, 0.011f, 0.015f, 0.019f, 0.024f, 0.029f, 0.034f, 0.039f, 0.045f, 0.051f, 0.057f, 0.063f, 0.070f, 0.076f, 0.083f, 0.090f, 0.097f, 0.105f, 0.112f, 0.120f, 0.127f, 0.135f, 0.143f, 0.151f, 0.159f, 0.168f, 0.176f, 0.185f, 0.194f, 0.202f, 0.211f, 0.220f, 0.229f, 0.239f, 0.248f, 0.258f, 0.267f, 0.277f, 0.287f, 0.296f, 0.306f, 0.316f, 0.326f, 0.337f, 0.347f, 0.357f, 0.368f, 0.378f, 0.389f, 0.400f, 0.411f, 0.422f, 0.433f, 0.444f, 0.455f, 0.466f, 0.477f, 0.489f, 0.500f, 0.512f, 0.523f, 0.535f, 0.547f, 0.558f, 0.570f, 0.582f, 0.594f, 0.606f, 0.619f, 0.631f, 0.643f, 0.656f, 0.668f, 0.680f, 0.693f, 0.706f, 0.718f, 0.731f, 0.744f, 0.757f, 0.770f, 0.783f, 0.796f, 0.809f, 0.822f, 0.836f, 0.849f, 0.862f, 0.876f, 0.889f, 0.903f, 0.917f, 0.930f, 0.944f, 0.958f, 0.972f, 0.986f, 1.0f};
 
 
 double customPower(double x)
 {
 	return staticArray[static_cast<int>(floor(x * 100))];
+}
+
+double interpolate(double min, double max, double x)
+{
+	return x * (max - min) + min;
 }

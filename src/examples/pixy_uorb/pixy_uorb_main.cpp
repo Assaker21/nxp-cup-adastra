@@ -137,6 +137,7 @@ int pixy_uorb_thread_main(int argc, char **argv)
 			float sumY1 = 0;
 
 			char buffer[128];
+			int numVectors = 0;
 
 			for (int i = 0; i < pixy.line.numVectors; i++) {
 				float x0 = (float)pixy.line.vectors[i].m_x0;
@@ -160,7 +161,8 @@ int pixy_uorb_thread_main(int argc, char **argv)
 				x0 = transformPointX(x0, y0, CAMERA_ANGLE, SCREEN_WIDTH, SCREEN_HEIGHT);
 				x1 = transformPointX(x1, y1, CAMERA_ANGLE, SCREEN_WIDTH, SCREEN_HEIGHT);
 
-				sprintf(buffer, "Transformed vec%d: x0=%.2f y0=%.2f, x1=%.2f y1=%.2f\n", i, (double)x0, (double)y0, (double)x1, (double)y1);
+				sprintf(buffer, "Transformed vec%d: x0=%.2f y0=%.2f, x1=%.2f y1=%.2f\n", i, (double)x0, (double)y0, (double)x1,
+					(double)y1);
 				printf(buffer);
 
 				if (absoluteValue((double)(y1 - y0)) > IGNORED_THRESHOLD) {
@@ -168,6 +170,7 @@ int pixy_uorb_thread_main(int argc, char **argv)
 					sumX1 += x1;
 					sumY0 += y0;
 					sumY1 += y1;
+					numVectors++;
 
 				} else {
 					sprintf(buffer, "Vec%d was ignored\n", i);
@@ -175,10 +178,10 @@ int pixy_uorb_thread_main(int argc, char **argv)
 				}
 			}
 
-			sumX0 /= pixy.line.numVectors;
-			sumY0 /= pixy.line.numVectors;
-			sumX1 /= pixy.line.numVectors;
-			sumY1 /= pixy.line.numVectors;
+			sumX0 /= numVectors;
+			sumY0 /= numVectors;
+			sumX1 /= numVectors;
+			sumY1 /= numVectors;
 
 			float pente = 0;
 
@@ -186,6 +189,36 @@ int pixy_uorb_thread_main(int argc, char **argv)
 				pente = (float)(sumY0 - sumY1) / (float)(sumX1 - sumX0);
 				pente = 1 / pente;
 			}
+
+			//float averageX = (sumX0 + sumX1) / 2;
+			//float averageY = (sumY0 + sumY1) / 2;
+
+			/*if (abs(sumX0 - sumX1) > SCREEN_WIDTH / 2 || abs(sumY1 - sumY0) > SCREEN_HEIGHT * 0.6f) {}
+			else if ((averageX > SCREEN_WIDTH / 2 && averageY > SCREEN_HEIGHT / 2 && pente > 0) || (averageX < SCREEN_WIDTH / 2
+					&& averageY > SCREEN_HEIGHT / 2 && pente < 0)) {
+				pente = 0;
+			}*/
+
+			if (abs(sumX0 - sumX1) < SCREEN_WIDTH / 2) {
+				float a = (sumY1 - sumY0) / (sumX1 - sumX0);
+				float b = sumY0 - a * sumX0;
+
+				float py = b;
+				float px  = -b / a;
+
+
+				if (a < 0 && py > SCREEN_HEIGHT && px > SCREEN_WIDTH) {
+					pente = 0;
+				}
+
+				if (a > 0 && py > 0 && py < SCREEN_HEIGHT && px < 0) {
+					pente = 0;
+				}
+
+
+			}
+
+
 
 			_pixy_vector.pente = pente;
 
@@ -199,7 +232,8 @@ int pixy_uorb_thread_main(int argc, char **argv)
 			sprintf(buffer, "\nPente of the main vector=%.2f", (double)pente);
 			printf(buffer);
 
-			sprintf(buffer, "\nNO PID: steering value=%.2f, without atan: %.2f", (double)(atan(pente) / 1.5708f * 1.3f), (double)(pente));
+			sprintf(buffer, "\nNO PID: steering value=%.2f, without atan: %.2f", (double)(atan(pente) / 1.5708f * 1.3f),
+				(double)(pente));
 			printf(buffer);
 
 			if (threadShouldExit_uorb) {
