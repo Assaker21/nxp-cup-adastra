@@ -48,15 +48,15 @@
 //#include <vector>
 
 
-#define PID_P		1.0f // 2.5f
+#define PID_P		2.0f // 2.5f
 #define PID_I		0.0f // 0.0f
 #define PID_D		1.0f // 1.0f
 
-#define PID2_P		10.0f
+#define PID2_P		100.0f // 10.0f
 #define PID2_I  	0.0f
-#define PID2_D		0.5f
+#define PID2_D		0.0f // 0.5f
 
-#define PID3_P		100.0f
+#define PID3_P		1000.0f
 #define PID3_I		0.0f
 #define PID3_D		0.0f
 
@@ -79,7 +79,7 @@
 // 2000us is full forward.
 // Motor PWM rate depends on battery level and other factors.
 // Find the motor activation PWM and use that as a base for the mapping.
-#define MOTOR_ACTIVATION_PWM  1570 // 1665 1570
+#define MOTOR_ACTIVATION_PWM  1665 // 1665 1570
 
 extern double printed_value;
 
@@ -126,7 +126,7 @@ struct Vector {
 	uint8_t m_y1;
 };
 
-roverControl raceTrack(const pixy_vector_s &pixy, PID_t &PID, PID_t &PID2, PID_t &PID3);
+roverControl raceTrack(const pixy_vector_s &pixy, PID_t &PID, PID_t &PID2, PID_t &PID3, double old_steer);
 uint8_t get_num_vectors(Vector &vec1, Vector &vec2);
 Vector copy_vectors(pixy_vector_s &pixy, uint8_t num);
 double interpolate(double min, double max, double x);

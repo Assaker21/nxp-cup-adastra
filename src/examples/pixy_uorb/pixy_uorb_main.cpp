@@ -190,15 +190,6 @@ int pixy_uorb_thread_main(int argc, char **argv)
 				pente = 1 / pente;
 			}
 
-			//float averageX = (sumX0 + sumX1) / 2;
-			//float averageY = (sumY0 + sumY1) / 2;
-
-			/*if (abs(sumX0 - sumX1) > SCREEN_WIDTH / 2 || abs(sumY1 - sumY0) > SCREEN_HEIGHT * 0.6f) {}
-			else if ((averageX > SCREEN_WIDTH / 2 && averageY > SCREEN_HEIGHT / 2 && pente > 0) || (averageX < SCREEN_WIDTH / 2
-					&& averageY > SCREEN_HEIGHT / 2 && pente < 0)) {
-				pente = 0;
-			}*/
-
 			if (abs(sumX0 - sumX1) < SCREEN_WIDTH / 2) {
 				float a = (sumY1 - sumY0) / (sumX1 - sumX0);
 				float b = sumY0 - a * sumX0;

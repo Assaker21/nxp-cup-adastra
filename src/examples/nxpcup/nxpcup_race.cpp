@@ -18,6 +18,8 @@ uint8_t p_vec2_y1 = 0;
 double *powerLookupTable;
 uint8_t initialized;
 
+//double old_steer;
+
 uint8_t get_num_vectors(Vector &vec1, Vector &vec2)
 {
 	uint8_t numVectors = 0;
@@ -50,7 +52,7 @@ Vector copy_vectors(const pixy_vector_s &pixy, uint8_t num)
 	return vec;
 }
 
-roverControl raceTrack(const pixy_vector_s &pixy, PID_t &PID, PID_t &PID2, PID_t &PID3)
+roverControl raceTrack(const pixy_vector_s &pixy, PID_t &PID, PID_t &PID2, PID_t &PID3, double old_steer)
 {
 	//Vector main_vec;
 	onInitialize();
@@ -62,9 +64,10 @@ roverControl raceTrack(const pixy_vector_s &pixy, PID_t &PID, PID_t &PID2, PID_t
 	//int16_t window_center = (frameWidth / 2);
 	roverControl control{};
 	//float x, y;					 // calc gradient and position of main vector
-	//static hrt_abstime no_line_time = 0;		// time variable for time since no line detected
-	//hrt_abstime time_diff = 0;
-	//static bool first_call = true;
+	static hrt_abstime no_line_time = 0;		// time variable for time since no line detected
+	//static float oldSteer = 0;
+	hrt_abstime time_diff = 0;
+	static bool first_call = true;
 
 	static hrt_abstime old_t = hrt_absolute_time();
 	hrt_abstime t = hrt_absolute_time();
@@ -139,8 +142,22 @@ roverControl raceTrack(const pixy_vector_s &pixy, PID_t &PID, PID_t &PID2, PID_t
 	float angle = float(atan(control.steer)) / 1.5708f;
 	control.steer = angle * 1.3f;
 
+	float steerDerivative = abs(angle) - abs(old_steer);
+	old_steer = angle;
 
-	double steering_value = control.steer;
+	printed_value = steerDerivative;
+	p_vec1_x0 = angle;
+
+
+	uint8_t turn_state = 0; // 1 -> entering turn ---- / 2 -> leaving turn
+
+	if (angle > 0) {
+		turn_state = 1;
+
+	} else {
+		turn_state = 2;
+	}
+
 
 	float sign = 0;
 
@@ -155,36 +172,76 @@ roverControl raceTrack(const pixy_vector_s &pixy, PID_t &PID, PID_t &PID2, PID_t
 
 
 	double pid1 = pid_calculate(&PID, 0.0f, angle, 0.0f, (float)diff);
-	double pid2 = pid_calculate(&PID2, 0.0f, angle, 0.0f, (float)diff);
-	double pid3 = pid_calculate(&PID3, 0.0f, angle, 0.0f, (float)diff);
+	//double pid2 = pid_calculate(&PID2, 0.0f, angle, 0.0f, (float)diff);
+	//double pid3 = pid_calculate(&PID3, 0.0f, angle, 0.0f, (float)diff);
 
-	if (angle < 0.3f) { // slow: 0.15f -- fast: 0.3f
+	if (turn_state == 1) {
+		if (angle < 0.2f) { // slow: 0.15f -- fast: 0.3f
+			control.steer = pid1;
+
+		}  else {
+			control.steer = -sign; //pid3
+		}
+
+	} else if (turn_state == 2 && abs(angle) > 0.4f) {
+
 		control.steer = pid1;
-	} else if (angle < 0.6f) {
-		control.steer = pid2;
+
 	} else {
-		control.steer = pid3;
+		control.steer = 0;
 	}
+
 
 	if (abs(control.steer) < 0.15f) {
-		control.speed = 0.6f;
+		control.speed = 0.7f; // 0.7f
+
+	} else if (abs(control.steer) < 0.4f) {
+		control.speed = 0.5f; // 0.6f
 
 	} else if (abs(control.steer) < 0.6f) {
-		control.speed = 0.3f;
+		control.speed = 0.3f; // 0.3f
 
-	} else {
-		control.speed = 0.25f;
+	}  else {
+		control.speed = 0.2f; // 0.2f
 	}
 
-	printed_value = steering_value;
-	printed_value = control.steer;
+	/*if (abs(control.steer) > 0.4f && abs(control.steer) < 0.5f) {
+		if (steerDerivative > 0) {
+			control.speed = 0.0f;
 
+		} else {
+			control.speed = 1.0f;
+		}
+
+
+	}*/
 
 	if (noVectors == 1) {
-		control.speed = 0.1f;
+		if (first_call) {
+			no_line_time = hrt_absolute_time();
+			first_call = false;
+
+		} else {
+			time_diff = hrt_elapsed_time_atomic(&no_line_time);
+			control.steer = 0.0f;
+
+			if (time_diff > 500000) {
+				// Stopping if no vector is available
+				control.steer = 0.0f;
+				control.speed = 0.0f;
+			}
+		}
 	}
 
-	//control.speed = 0.0f;
+	if (steerDerivative > 0) {
+		control.steer = 1;
+
+	} else if(steerDerivative < 0) {
+		control.steer = -1;
+	}
+	else {
+		control.steer = 0.3f;
+	}
 
 
 	return control;

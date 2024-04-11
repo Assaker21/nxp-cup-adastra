@@ -66,6 +66,21 @@ bool NxpCupWork::init()
 
 void NxpCupWork::roverSteerSpeed(roverControl control, int fd)
 {
+
+	if (control.steer > 1.0f) {
+		control.steer = 1.0f;
+
+	} else if (control.steer < -1.0f) {
+		control.steer = -1.0f;
+	}
+
+	/*if (control.speed < 0.0f) {
+		control.speed = 0.0f;
+
+	} else if (control.speed > 1.0f) {
+		control.speed = 1.0f;
+	}*/
+
 	// Steering control of the Rover
 	// 2000 is extreme left -1
 	// 1500 is 0
@@ -83,16 +98,13 @@ void NxpCupWork::roverSteerSpeed(roverControl control, int fd)
 	// normalized value is control.speed which is between 0 and 1.
 
 	if (!(control.speed <= 0.0f && control.speed >= 0.0f)) {
-		if (control.speed < 0.0f) {
-			control.speed = 0.0f;
-
-		} else if (control.speed > 1.0f) {
-			control.speed = 1.0f;
-		}
-
 		motor_pwm_rate = MOTOR_ACTIVATION_PWM + control.speed * 40;
-
 	}
+	else {
+		motor_pwm_rate = 1000;
+	}
+
+
 
 	::ioctl(fd, PWM_SERVO_SET_MODE, PWM_SERVO_ENTER_TEST_MODE);
 	// Change speed then steerting.
@@ -112,6 +124,7 @@ void NxpCupWork::Run()
 	static PID_t PID;
 	static PID_t PID2;
 	static PID_t PID3;
+	static double old_steer;
 
 	pid_init(&PID, PID_MODE_DERIVATIV_CALC_NO_SP, 1.0f);
 	pid_init(&PID2, PID_MODE_DERIVATIV_CALC_NO_SP, 1.0f);
@@ -141,7 +154,7 @@ void NxpCupWork::Run()
 	/* Get pixy data */
 	pixy_sub.update();
 	const pixy_vector_s &pixy = pixy_sub.get();
-	motorControl = raceTrack(pixy, PID, PID2, PID3);
+	motorControl = raceTrack(pixy, PID, PID2, PID3, old_steer);
 
 	NxpCupWork::roverSteerSpeed(motorControl, fd);
 
@@ -177,14 +190,14 @@ int NxpCupWork::print_status()
 	//perf_print_counter(_loop_interval_perf);
 	//PX4_INFO("Distance sensor data: %f", (double)distance_sensor_data.current_distance);
 
-	printf("PID output 1: %0.2f\n", printed_value);
+	printf("DERIVATIVE: %0.2f\n", printed_value);
 	char buf[64];
-	sprintf(buf, "vec1: 0=(%d %d) 1=(%d %d)\n", p_vec1_x0, p_vec1_y0, p_vec1_x1, p_vec1_y1);
+	sprintf(buf, "steer: new_steer=(%d) old_steer=(%d)\n", p_vec1_x0, p_vec1_x1);
 	printf(buf);
 
-	char buff[64];
+	/*char buff[64];
 	sprintf(buff, "vec2: 0=(%d %d) 1=(%d %d)\n", p_vec2_x0, p_vec2_y0, p_vec2_x1, p_vec2_y1);
-	printf(buff);
+	printf(buff);*/
 
 	return 0;
 }
