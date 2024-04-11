@@ -65,6 +65,7 @@ roverControl raceTrack(const pixy_vector_s &pixy, PID_t &PID, PID_t &PID2, PID_t
 	//static hrt_abstime no_line_time = 0;		// time variable for time since no line detected
 	//hrt_abstime time_diff = 0;
 	//static bool first_call = true;
+	static double old_steer = 0;
 
 	static hrt_abstime old_t = hrt_absolute_time();
 	hrt_abstime t = hrt_absolute_time();
@@ -139,8 +140,9 @@ roverControl raceTrack(const pixy_vector_s &pixy, PID_t &PID, PID_t &PID2, PID_t
 	float angle = float(atan(control.steer)) / 1.5708f;
 	control.steer = angle * 1.3f;
 
+	double derivative = fabs(angle) - fabs(old_steer);
+	old_steer = angle;
 
-	double steering_value = control.steer;
 
 	float sign = 0;
 
@@ -160,31 +162,47 @@ roverControl raceTrack(const pixy_vector_s &pixy, PID_t &PID, PID_t &PID2, PID_t
 
 	if (angle < 0.3f) { // slow: 0.15f -- fast: 0.3f
 		control.steer = pid1;
+
 	} else if (angle < 0.6f) {
 		control.steer = pid2;
+
 	} else {
 		control.steer = pid3;
 	}
 
-	if (abs(control.steer) < 0.15f) {
-		control.speed = 0.6f;
+	if ((double)fabs((double)control.steer) < 0.15) {
+		control.speed = 0.5f;
 
-	} else if (abs(control.steer) < 0.6f) {
+	} else if ((double)fabs((double)control.steer) < 0.6) {
 		control.speed = 0.3f;
 
 	} else {
-		control.speed = 0.25f;
+		control.speed = 0.2f;
 	}
 
-	printed_value = steering_value;
-	printed_value = control.steer;
+	if ((double)fabs((double)control.steer) < 0.7 && (double)fabs((double)control.steer) > 0.5) {
+      		if (derivative < 0.0) {
+			control.speed = 1.0f;
+		}
+	}
+	if ((double)fabs((double)control.steer) < 0.35 && (double)fabs((double)control.steer) > 0.25) {
+		if (derivative > 0.0) {
+			control.speed = 0.0f;
+
+		}
+	}
 
 
 	if (noVectors == 1) {
 		control.speed = 0.1f;
 	}
 
+
+
+
 	//control.speed = 0.0f;
+
+	printed_value = derivative;
 
 
 	return control;

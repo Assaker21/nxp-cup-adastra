@@ -79,7 +79,7 @@
 // 2000us is full forward.
 // Motor PWM rate depends on battery level and other factors.
 // Find the motor activation PWM and use that as a base for the mapping.
-#define MOTOR_ACTIVATION_PWM  1570 // 1665 1570
+#define MOTOR_ACTIVATION_PWM  1655 // 1665 1570
 
 extern double printed_value;
 
