@@ -66,12 +66,12 @@ bool NxpCupWork::init()
 
 void NxpCupWork::roverSteerSpeed(roverControl control, int fd)
 {
-	if (control.speed < 0.0f) {
+	/*if (control.speed < 0.0f) {
 		control.speed = 0.0f;
 
 	} else if (control.speed > 1.0f) {
 		control.speed = 1.0f;
-	}
+	}*/
 
 	// Steering control of the Rover
 	// 2000 is extreme left -1
@@ -90,17 +90,14 @@ void NxpCupWork::roverSteerSpeed(roverControl control, int fd)
 	// normalized value is control.speed which is between 0 and 1.
 
 	if (!(control.speed <= 0.0f && control.speed >= 0.0f)) {
-		/*if (control.speed < 0.0f) {
-			control.speed = 0.0f;
-
-		} else if (control.speed > 1.0f) {
-			control.speed = 1.0f;
-		}*/
-
 		motor_pwm_rate = MOTOR_ACTIVATION_PWM + control.speed * 40;
 
 	} else {
-		motor_pwm_rate = 1500;
+		motor_pwm_rate = 1000;
+	}
+
+	if(motor_pwm_rate > 1990) {
+		motor_pwm_rate = 1900;
 	}
 
 	::ioctl(fd, PWM_SERVO_SET_MODE, PWM_SERVO_ENTER_TEST_MODE);

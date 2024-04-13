@@ -221,6 +221,12 @@ int pixy_uorb_thread_main(int argc, char **argv)
 
 
 			_pixy_vector.pente = pente;
+			if(numVectors > 1) {
+				_pixy_vector.xAverage = sumX1;
+			}
+			else {
+				_pixy_vector.xAverage = SCREEN_WIDTH / 2;
+			}
 
 			_pixy_vector.timestamp = hrt_absolute_time();
 			_pixy_vector_pub.publish(_pixy_vector);

@@ -66,6 +66,7 @@ roverControl raceTrack(const pixy_vector_s &pixy, PID_t &PID, PID_t &PID2, PID_t
 	//hrt_abstime time_diff = 0;
 	//static bool first_call = true;
 	static double old_steer = 0;
+	//static double cumulative_speed = 0;
 
 	static hrt_abstime old_t = hrt_absolute_time();
 	hrt_abstime t = hrt_absolute_time();
@@ -138,7 +139,11 @@ roverControl raceTrack(const pixy_vector_s &pixy, PID_t &PID, PID_t &PID2, PID_t
 	float steeringSensitivity = 1;
 	control.steer = pente * steeringSensitivity;
 	float angle = float(atan(control.steer)) / 1.5708f;
+	//angle += 0.3f * (pixy.xAverage - (float)frameWidth / 2) / ((float)frameWidth / 2);
+
 	control.steer = angle * 1.3f;
+
+
 
 	double derivative = fabs(angle) - fabs(old_steer);
 	old_steer = angle;
@@ -160,44 +165,73 @@ roverControl raceTrack(const pixy_vector_s &pixy, PID_t &PID, PID_t &PID2, PID_t
 	double pid2 = pid_calculate(&PID2, 0.0f, angle, 0.0f, (float)diff);
 	double pid3 = pid_calculate(&PID3, 0.0f, angle, 0.0f, (float)diff);
 
-	if (angle < 0.3f) { // slow: 0.15f -- fast: 0.3f
+	if (angle < 0.2f) { // slow: 0.15f -- fast: 0.3f
 		control.steer = pid1;
 
-	} else if (angle < 0.6f) {
-		control.steer = pid2;
-
 	} else {
-		control.steer = pid3;
+		if (derivative > 0.0) {
+			control.steer = pid3; // -sign
+		} else if(derivative < -0.1) {
+			control.steer = 0;
+		}
+		else {
+			control.steer = pid2;
+		}
+
 	}
 
-	if ((double)fabs((double)control.steer) < 0.15) {
-		control.speed = 0.5f;
+	if ((double)fabs(angle) < 0.15) {
+		control.speed = 0.7f; // 0.7
 
-	} else if ((double)fabs((double)control.steer) < 0.6) {
-		control.speed = 0.3f;
+	} else if ((double)fabs(angle) < 0.6) {
+		control.speed = 0.6f; // 0.5
 
 	} else {
-		control.speed = 0.2f;
+		control.speed = 0.4f;
 	}
 
-	if ((double)fabs((double)control.steer) < 0.7 && (double)fabs((double)control.steer) > 0.5) {
-      		if (derivative < 0.0) {
-			control.speed = 1.0f;
+	if ((double)fabs(angle) < 0.75 && (double)fabs(angle) > 0.5) {
+		if (derivative < 0.0) {
+			control.speed = 3.0f;
 		}
 	}
-	if ((double)fabs((double)control.steer) < 0.35 && (double)fabs((double)control.steer) > 0.25) {
+
+	if ((double)fabs(angle) < 0.5 && (double)fabs(angle) > 0.35) {
 		if (derivative > 0.0) {
+			/*if (cumulative_speed >= 0.0) { // 2.0
+				control.speed = 0.0f;
+
+			} else {
+				control.speed = 0.4f;
+			}*/
+
 			control.speed = 0.0f;
 
 		}
 	}
 
+	/*if (!(control.speed <= 0.0f && control.speed >= 0.0f)) {
+		cumulative_speed += (double)control.speed;
+
+	} else {
+		//cumulative_speed -= 0.1 * cumulative_speed;
+		cumulative_speed = 0.0;
+	}*/
 
 	if (noVectors == 1) {
-		control.speed = 0.1f;
+		control.speed = 0.0f;
+		control.steer = 0.0f;
 	}
 
+	//control.speed *= 0.5f;
 
+
+	/*if (control.speed <= 0.0f) {
+		speed += -1.0 * diff / 1000;
+
+	} else {
+		speed += control.speed * diff / 1000;
+	}*/
 
 
 	//control.speed = 0.0f;
